@@ -1,0 +1,32 @@
+{
+  "name": "campusflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CampusFlow - Student Schedule & Task Management System",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev": "pnpm --filter @campusflow/api run dev",
+    "dev:web": "pnpm --filter @campusflow/web run dev",
+    "dev:api": "pnpm --filter @campusflow/api run dev",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "lint": "pnpm -r --if-present run lint",
+    "db:generate": "pnpm --filter @campusflow/database run db:generate",
+    "db:migrate": "pnpm --filter @campusflow/database run db:migrate",
+    "db:deploy": "pnpm --filter @campusflow/database run db:deploy",
+    "db:seed": "pnpm --filter @campusflow/database run db:seed",
+    "dev:infra": "pnpm --filter @campusflow/dev-infra run start",
+    "infra:stop": "pnpm --filter @campusflow/dev-infra run stop",
+    "infra:status": "pnpm --filter @campusflow/dev-infra run status",
+    "test": "pnpm -r --if-present run test",
+    "test:unit": "pnpm --filter @campusflow/api run test:unit",
+    "test:e2e": "pnpm --filter @campusflow/api run test:e2e"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.9"
+}

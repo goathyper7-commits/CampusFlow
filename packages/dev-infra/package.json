@@ -1,0 +1,20 @@
+{
+  "name": "@campusflow/dev-infra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CampusFlow local dev infrastructure: embedded PostgreSQL 16 (Windows x64 binary) + Redis-compatible server (Memurai via redis-memory-server). No Docker required.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js start",
+    "stop": "node src/index.js stop",
+    "status": "node src/index.js status",
+    "build": "node -e \"console.log('dev-infra: nothing to build')\"",
+    "typecheck": "node -e \"console.log('dev-infra: no typecheck')\"",
+    "lint": "node -e \"console.log('dev-infra: no lint')\""
+  },
+  "dependencies": {
+    "embedded-postgres": "16.14.0-beta.17",
+    "pg": "^8.13.1",
+    "redis-memory-server": "^0.17.1"
+  }
+}

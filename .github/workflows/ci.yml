@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: campusflow
+          POSTGRES_PASSWORD: campusflow
+          POSTGRES_DB: campusflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U campusflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://campusflow:campusflow@localhost:5432/campusflow
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-jwt-secret-0123456789abcdef
+      JWT_REFRESH_SECRET: ci-jwt-refresh-secret-0123456789abcdef
+      VAPID_PUBLIC_KEY: BK_hUgL9qnkEpZ8LLrg6tRVMfVvb5qGQQ1VxamD2lo5TU_RYGuRg4wUbWr4Zw1UruiQa6RVg4p0X8D6FQ
+      VAPID_PRIVATE_KEY: V7BXINYd2ncBqDOkyPlFm8K4jU7W9loRZaPz0aztU6Q
+      VAPID_SUBJECT: mailto:admin@campusflow.local
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Apply migrations
+        run: pnpm db:deploy
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build API
+        run: pnpm --filter @campusflow/api run build
+
+      - name: Build web
+        run: pnpm --filter @campusflow/web run build
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: E2E tests
+        run: pnpm test:e2e

@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.vite/
+
+# Builds
+dist/
+.next/
+out/
+build/
+.coverage/
+
+# Local tooling / infra data
+.infrastructure/
+.infra/
+.tools/
+coverage/
+
+# Prisma
+packages/database/prisma/migrations/dev.db*
+packages/database/generated/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Turbo
+.turbo/
+
+# Misc
+*.tsbuildinfo
+next-env.d.ts
+# API uploaded files
+apps/api/uploads/
