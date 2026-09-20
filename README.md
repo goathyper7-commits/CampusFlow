@@ -50,7 +50,7 @@ Sistem manajemen jadwal kuliah, tugas, dan deadline mahasiswa berbasis **Progres
 **Di luar lingkup / catatan**
 - Google Calendar sync tidak diimplementasikan (butuh OAuth + project Google Cloud di lingkungan produksi).
 - Test k6 tidak dieksekusi di lingkungan dev ini karena binary k6 tidak tersedia (tanpa download).
-- Deployment container (Dockerfile, Nginx) belum diverifikasi di lingkungan dev (tanpa Docker); siap untuk deployment produksi.
+- Deployment container (Dockerfile, Nginx) belum dieksekusi di lingkungan dev (tanpa Docker); config sudah ditulis ulang agar sesuai monorepo pnpm.
 
 ## Struktur
 
@@ -90,6 +90,29 @@ pnpm dev:web    # http://localhost:3000
 ```
 
 Catatan: di lingkungan agent CLI, proses yang di-spawn ikut mati saat perintah selesai — jalankan API/Web di terminal terpisah, infra dijadwalkan via Scheduled Task agar persisten.
+
+## Deployment (Docker)
+
+Dockerfile memakai **pnpm via corepack** (`--frozen-lockfile --ignore-scripts`); stack produksi di `docker-compose.yml`: PostgreSQL 16 + Redis 7 (healthcheck) → API → Web → Nginx di port 80/443.
+
+```powershell
+# 1) Siapkan apps/api/.env (contoh: apps/api/.env.example) — wajib berisi
+#    JWT_SECRET, JWT_REFRESH_SECRET, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, etc.
+#    (POSTGRES_PASSWORD opsional, default "campusflow")
+#    Push notification: taruh NEXT_PUBLIC_VAPID_PUBLIC_KEY di .env ROOT proyek
+#    (dibaca compose untuk build-arg web) lalu build dengan
+#    NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY.
+
+# 2) Build & jalankan
+docker compose up --build -d
+
+# 3) Opsional: seed admin sekali — set RUN_SEED=true di .env (atau
+#    environment compose), maka entrypoint API otomatis menjalankan
+#    prisma migrate deploy + seed setiap container start.
+#    docker compose up -d --build api
+```
+
+Cara kerja: entrypoint API (`apps/api/docker-entrypoint.sh`) menjalankan `prisma migrate deploy` (dan seed bila `RUN_SEED=true`) sebelum `node dist/main.js`; web di-build dengan `NEXT_PUBLIC_API_URL=/api` (same-origin, diproksi Nginx). File upload (`uploads/`) dipersistenkan di volume `uploads`. TLS: tambahkan blok `listen 443 ssl` di `nginx/nginx.conf` (mount sertifikat).
 
 ## Endpoint API
 

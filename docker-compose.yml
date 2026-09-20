@@ -8,32 +8,49 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusflow}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusflow -d campusflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
-    depends_on:
-      - postgres
-      - redis
-    env_file: .env
+    env_file: ./apps/api/.env
     environment:
       DATABASE_URL: postgresql://campusflow:${POSTGRES_PASSWORD:-campusflow}@postgres:5432/campusflow
+      REDIS_URL: redis://redis:6379
+      RUN_SEED: ${RUN_SEED:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
     restart: unless-stopped
     depends_on:
       - api
-    environment:
-      API_URL: http://api:3001
 
   nginx:
     image: nginx:alpine
@@ -48,3 +65,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:
