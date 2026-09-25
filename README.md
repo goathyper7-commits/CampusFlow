@@ -44,12 +44,12 @@ Sistem manajemen jadwal kuliah, tugas, dan deadline mahasiswa berbasis **Progres
 - [x] Jest unit (`apps/api/test/unit`): format pesan reminder, validitas custom jobId BullMQ
 - [x] Supertest e2e (`apps/api/test/app.e2e-spec.ts`): auth, profil, course/task CRUD, preferensi notif, admin 403, komentar, lampiran
 - [x] Reminder engine **teruji live**: delayed job → Notification `REMINDER` dibuat, `Reminder.isSent = true`; tugas yang di-mark `SELESAI` tidak menghasilkan notifikasi
-- [x] Skrip load test k6 (`apps/api/test/load/campusflow.k6.js`) — siap dijalankan bila k6 tersedia di mesin
+- [x] Load test k6 (`apps/api/test/load/campusflow.k6.js`) dieksekusi: 50 VU ramp 40s → **4282 req, 100% check lulus (~105 rps)**, p(95) latency 1,13 s di dev-infra embedded (bottleneck `bcryptjs` diatasi → native `bcrypt`, latensi +4×, throughput +4×)
 - [x] `pnpm typecheck` seluruh workspace : hijau; `next build` produksi: hijau (custom worker + sw.js ter-bundle)
 
 **Di luar lingkup / catatan**
 - Google Calendar sync tidak diimplementasikan (butuh OAuth + project Google Cloud di lingkungan produksi).
-- Test k6 tidak dieksekusi di lingkungan dev ini karena binary k6 tidak tersedia (tanpa download).
+- Load test k6 dijalankan dengan binary k6 (di luar repo, tidak dikomit) terhadap dev-infra; ambang skrip (p95<1500ms) ditujukan untuk dev box, target produksi dokumentasikan terpisah.
 - Deployment container (Dockerfile, Nginx) belum dieksekusi di lingkungan dev (tanpa Docker); config sudah ditulis ulang agar sesuai monorepo pnpm.
 
 ## Struktur

@@ -15,7 +15,7 @@
 ## Konteks proyek
 - Repo: `campusflow/` — monorepo pnpm workspace (`apps/web` Next.js 14 + `apps/api` NestJS 10 + `packages/database` Prisma + `packages/shared-types` + `packages/dev-infra`).
 - Port: web 3000, api 3001 (/api). DB: PostgreSQL 16 (embedded via `pnpm dev:infra`, port 5432, user campusflow), Redis (Memurai via dev:infra, port 6379) untuk BullMQ reminder.
-- Stack: Next.js 14 (App Router), React 18, Tailwind (custom ui.tsx — bukan shadcn; komponen UI ada di apps/web/components/ui.tsx), Zustand (state), RHF+Zod (form), FullCalendar, Recharts, Dexie (offline). Backend NestJS modular monolith, Prisma ORM, JWT (access 15m + refresh 7d di HTTP-only cookie), bcryptjs. Testing: Jest (unit) + Supertest (e2e), k6 (load).
+- Stack: Next.js 14 (App Router), React 18, Tailwind (custom ui.tsx — bukan shadcn; komponen UI ada di apps/web/components/ui.tsx), Zustand (state), RHF+Zod (form), FullCalendar, Recharts, Dexie (offline). Backend NestJS modular monolith, Prisma ORM, JWT (access 15m + refresh 7d di HTTP-only cookie), bcrypt (native). Testing: Jest (unit) + Supertest (e2e), k6 (load).
 - Menjalankan: `pnpm dev:infra` (PG+Redis) → `pnpm db:generate && pnpm db:migrate` → `pnpm dev:api` + `pnpm dev:web`. Tes: `pnpm test:unit`, `pnpm test:e2e`.
 - Style: TypeScript strict, class-validator untuk DTO backend, komentar code dilarang.
 - Hal yang TIDAK boleh diubah tanpa izin: file `.env` yang berisi secret, konfigurasi deploy produksi, dan model Prisma di luar scope task yang sedang aktif.

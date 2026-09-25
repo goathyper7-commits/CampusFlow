@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { UserProfile } from '@campusflow/shared-types';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterDto, UpdateProfileDto } from './dto';
