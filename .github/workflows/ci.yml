@@ -64,6 +64,9 @@ jobs:
       - name: Apply migrations
         run: pnpm db:deploy
 
+      - name: Build shared types & database
+        run: pnpm --filter @campusflow/shared-types run build && pnpm --filter @campusflow/database run build
+
       - name: Typecheck
         run: pnpm typecheck
 
