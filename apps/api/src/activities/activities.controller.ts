@@ -21,6 +21,11 @@ export class ActivitiesController {
     return this.activities.findAll(req.user.sub);
   }
 
+  @Get('today')
+  hariIni(@Req() req: { user: JwtUser }) {
+    return this.activities.hariIni(req.user.sub);
+  }
+
   @Post()
   create(@Req() req: { user: JwtUser }, @Body() dto: CreateActivityDto) {
     return this.activities.create(req.user.sub, dto);

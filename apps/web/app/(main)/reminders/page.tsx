@@ -12,7 +12,13 @@ import {
   StatusBadge,
 } from '@/components/ui';
 
-const OFFSET_OPTIONS = [1, 2, 3, 6, 12, 24, 48, 72, 168];
+const OFFSET_OPTIONS_MINUTES = [5, 10, 15, 30, 60, 120, 180, 360, 720, 1440];
+
+function formatOffset(minutes: number): string {
+  if (minutes < 60) return `${minutes} menit`;
+  if (minutes % 60 === 0) return `${minutes / 60} jam`;
+  return `${Math.floor(minutes / 60)} jam ${minutes % 60} menit`;
+}
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('id-ID', {
@@ -24,6 +30,14 @@ function formatDateTime(iso: string) {
   });
 }
 
+const STATUS_LABEL: Record<Reminder['status'], string> = {
+  SCHEDULED: 'Terjadwal',
+  SENT: 'Terkirim',
+  SNOOZED: 'Ditunda',
+  CANCELLED: 'Dibatalkan',
+  FAILED: 'Gagal',
+};
+
 export default function RemindersPage() {
   const {
     data: reminders,
@@ -34,7 +48,7 @@ export default function RemindersPage() {
   const { data: tasks } = useApi<Task[]>(() => apiFetch('/tasks'));
 
   const [taskId, setTaskId] = useState('');
-  const [offsetHours, setOffsetHours] = useState(24);
+  const [offsetMinutes, setOffsetMinutes] = useState(60);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -49,13 +63,13 @@ export default function RemindersPage() {
     try {
       await apiFetch('/reminders', {
         method: 'POST',
-        body: JSON.stringify({ taskId, offsetHours }),
+        body: JSON.stringify({ taskId, offsetMinutes }),
       });
       setTaskId('');
       reload();
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : 'Gagal menambah reminder',
+        err instanceof Error ? err.message : 'Gagal menambah pengingat',
       );
     } finally {
       setSaving(false);
@@ -65,13 +79,13 @@ export default function RemindersPage() {
   async function changeOffset(id: string, value: number) {
     await apiFetch(`/reminders/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ offsetHours: value }),
+      body: JSON.stringify({ offsetMinutes: value }),
     });
     reload();
   }
 
   async function remove(id: string) {
-    if (!window.confirm('Hapus reminder ini?')) return;
+    if (!window.confirm('Hapus pengingat ini?')) return;
     await apiFetch(`/reminders/${id}`, { method: 'DELETE' });
     reload();
   }
@@ -81,11 +95,12 @@ export default function RemindersPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Pengingat</h1>
         <p className="text-sm text-gray-500">
-          Terima notifikasi beberapa jam sebelum deadline tugas.
+          Atur pengingat tugas dan aktivitas. Notifikasi dikirim ke Telegram,
+          dengan cadangan ke aplikasi dan push.
         </p>
       </div>
 
-      <Card title="Tambah Pengingat">
+      <Card title="Tambah Pengingat Tugas">
         <form onSubmit={create} className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
           <select
             required
@@ -107,13 +122,13 @@ export default function RemindersPage() {
               ))}
           </select>
           <select
-            value={offsetHours}
-            onChange={(e) => setOffsetHours(Number(e.target.value))}
+            value={offsetMinutes}
+            onChange={(e) => setOffsetMinutes(Number(e.target.value))}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           >
-            {OFFSET_OPTIONS.map((h) => (
-              <option key={h} value={h}>
-                {h} jam sebelumnya
+            {OFFSET_OPTIONS_MINUTES.map((m) => (
+              <option key={m} value={m}>
+                {formatOffset(m)} sebelumnya
               </option>
             ))}
           </select>
@@ -131,8 +146,8 @@ export default function RemindersPage() {
           </div>
         )}
         <p className="mt-3 text-xs text-gray-400">
-          Pengingat aktif diproses oleh worker setiap menit; jika Redis mati,
-          tugas tersimpan namun job terlewat sampai terkirim berikutnya.
+          Pengingat aktivitas diatur dari halaman Aktivitas. Worker memproses
+          antrean setiap menit, jadi job yang terlewat tetap terkirim.
         </p>
       </Card>
 
@@ -152,37 +167,47 @@ export default function RemindersPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-gray-900">
-                      {r.task?.judul}
+                      {r.judul || r.task?.judul || r.event?.judul}
+                    </span>
+                    <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                      {r.sumber === 'TUGAS' ? 'Tugas' : 'Aktivitas'}
                     </span>
                     {r.task?.status && <StatusBadge status={r.task.status} />}
-                    {r.isSent ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                        Terkirim
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
-                        Terjadwal
-                      </span>
-                    )}
+                    <span
+                      className={
+                        r.status === 'SENT'
+                          ? 'inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700'
+                          : r.status === 'FAILED'
+                            ? 'inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700'
+                            : r.status === 'CANCELLED'
+                              ? 'inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600'
+                              : 'inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700'
+                      }
+                    >
+                      {STATUS_LABEL[r.status]}
+                    </span>
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
-                    Deadline{' '}
-                    {r.task?.deadline
-                      ? formatDateTime(r.task.deadline)
-                      : '—'}{' '}
-                    · Mengingatkan {formatDateTime(r.scheduledAt)}
+                    {r.task?.deadline ? `Deadline ${formatDateTime(r.task.deadline)}` : ''}
+                    {r.event?.waktuMulai
+                      ? `Mulai ${formatDateTime(r.event.waktuMulai)}`
+                      : ''}
+                    {r.event?.lokasi ? ` · ${r.event.lokasi}` : ''}
+                    {' · Mengingatkan '}
+                    {formatDateTime(r.scheduledAt)}
                     {r.sentAt ? ` · Dikirim ${formatDateTime(r.sentAt)}` : ''}
+                    {r.snoozeCount > 0 ? ` · Ditunda ${r.snoozeCount}x` : ''}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <select
-                    value={r.offsetHours}
+                    value={r.offsetMinutes}
                     onChange={(e) => changeOffset(r.id, Number(e.target.value))}
                     className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs"
                   >
-                    {OFFSET_OPTIONS.map((h) => (
-                      <option key={h} value={h}>
-                        {h} jam
+                    {OFFSET_OPTIONS_MINUTES.map((m) => (
+                      <option key={m} value={m}>
+                        {formatOffset(m)}
                       </option>
                     ))}
                   </select>

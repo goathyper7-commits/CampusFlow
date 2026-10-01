@@ -26,6 +26,11 @@ export class CreateActivityDto {
   waktuSelesai: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  lokasi?: string;
+
+  @IsOptional()
   @IsBoolean()
   isRecurring?: boolean;
 }

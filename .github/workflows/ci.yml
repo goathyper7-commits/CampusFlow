@@ -41,6 +41,10 @@ jobs:
       VAPID_PUBLIC_KEY: BK_hUgL9qnkEpZ8LLrg6tRVMfVvb5qGQQ1VxamD2lo5TU_RYGuRg4wUbWr4Zw1UruiQa6RVg4p0X8D6FQ
       VAPID_PRIVATE_KEY: V7BXINYd2ncBqDOkyPlFm8K4jU7W9loRZaPz0aztU6Q
       VAPID_SUBJECT: mailto:admin@campusflow.local
+      TG_BOT_TOKEN: ""
+      TG_BOT_USERNAME: ""
+      TG_WEBHOOK_SECRET: ci-telegram-webhook-secret
+      PUBLIC_API_URL: ""
 
     steps:
       - uses: actions/checkout@v4

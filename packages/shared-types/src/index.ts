@@ -17,12 +17,26 @@ export const HARI_OPTIONS = [
 ] as const;
 export type Hari = (typeof HARI_OPTIONS)[number];
 
-export type ActivityKategori = 'ORGANISASI' | 'EVENT' | 'PERSONAL';
+export type ActivityKategori =
+  | 'ORGANISASI'
+  | 'OLAHRAGA'
+  | 'KERJA_KELOMPOK'
+  | 'PRIBADI';
 export const AKTIVITAS_KATEGORI: ActivityKategori[] = [
   'ORGANISASI',
-  'EVENT',
-  'PERSONAL',
+  'OLAHRAGA',
+  'KERJA_KELOMPOK',
+  'PRIBADI',
 ];
+
+export type ReminderStatus =
+  | 'SCHEDULED'
+  | 'SENT'
+  | 'CANCELLED'
+  | 'SNOOZED'
+  | 'FAILED';
+
+export type ChannelType = 'TELEGRAM' | 'PUSH' | 'EMAIL' | 'IN_APP';
 
 export interface UserProfile {
   id: string;
@@ -31,6 +45,9 @@ export interface UserProfile {
   email: string;
   prodi?: string | null;
   semester?: number | null;
+  username?: string | null;
+  phoneE164?: string | null;
+  phoneVerifiedAt?: string | null;
   role: Role;
   createdAt: string;
 }
@@ -138,24 +155,38 @@ export interface DashboardSummary {
 
 export interface Reminder {
   id: string;
-  taskId: string;
+  taskId: string | null;
+  eventId: string | null;
+  sumber: 'TUGAS' | 'AKTIVITAS';
   task?:
     | (Pick<Task, 'id' | 'judul' | 'deadline' | 'status'> & {
         course?: Course | null;
       })
     | null;
-  offsetHours: number;
+  event?: {
+    id: string;
+    judul: string;
+    waktuMulai: string;
+    lokasi: string | null;
+  } | null;
+  offsetMinutes: number;
   scheduledAt: string;
+  status: ReminderStatus;
   isSent: boolean;
+  snoozeCount: number;
   sentAt?: string | null;
+  judul?: string;
+  lokasi?: string | null;
 }
 
 export interface Activity {
   id: string;
   judul: string;
   kategori: ActivityKategori;
+  lokasi: string | null;
   waktuMulai: string;
   waktuSelesai: string;
+  durasiMenit: number;
   isRecurring: boolean;
 }
 
@@ -196,15 +227,27 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   reminderId?: string | null;
+  channel: ChannelType;
+  status: string;
+  sentAt?: string | null;
+  error?: string | null;
   reminder?: {
     id: string;
-    offsetHours: number;
+    taskId: string | null;
+    eventId: string | null;
+    offsetMinutes: number;
     scheduledAt: string;
     task?: {
       id: string;
       judul: string;
       deadline: string;
       status: TaskStatus;
+    } | null;
+    event?: {
+      id: string;
+      judul: string;
+      waktuMulai: string;
+      lokasi: string | null;
     } | null;
   } | null;
 }
@@ -230,3 +273,5 @@ export interface HealthCheck {
   redis: string;
   timestamp: string;
 }
+
+export * from './telegram';

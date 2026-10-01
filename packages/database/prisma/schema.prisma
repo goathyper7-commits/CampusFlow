@@ -38,13 +38,37 @@ enum Hari {
 
 enum ActivityKategori {
   ORGANISASI
-  EVENT
-  PERSONAL
+  OLAHRAGA
+  KERJA_KELOMPOK
+  PRIBADI
 }
 
 enum GroupRole {
   KETUA
   ANGGOTA
+}
+
+enum ChannelType {
+  TELEGRAM
+  PUSH
+  EMAIL
+  IN_APP
+}
+
+enum OtpPurpose {
+  REGISTER
+  LOGIN_PERANGKAT_BARU
+  LUPA_SANDI
+  GANTI_USERNAME
+  GANTI_NOMOR
+}
+
+enum ReminderStatus {
+  SCHEDULED
+  SENT
+  CANCELLED
+  SNOOZED
+  FAILED
 }
 
 model User {
@@ -57,6 +81,15 @@ model User {
   semester     Int?
   role         Role     @default(MAHASISWA)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  phoneE164        String?   @unique
+  phoneVerifiedAt  DateTime?
+  username         String?   @unique
+  usernameChangedAt DateTime?
+  botEnabled       Boolean   @default(true)
+  quietHoursStart  Int?
+  quietHoursEnd    Int?
 
   courses              Course[]
   tasks                Task[]
@@ -68,7 +101,69 @@ model User {
   comments             Comment[]
   pushSubscriptions    PushSubscription[]
   notificationPreference NotificationPreference?
+  reminders            Reminder[]
   auditLogs            AuditLog[]
+  userChannels         UserChannel[]
+  telegramLinkTokens   TelegramLinkToken[]
+  otpCodes             OtpCode[]
+  usernameHistory      UsernameHistory[]
+}
+
+model UsernameHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username  String
+  changedAt DateTime @default(now())
+
+  @@index([userId, changedAt])
+}
+
+model UserChannel {
+  id               String      @id @default(uuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel          ChannelType
+  telegramChatId   String?     @unique
+  telegramUsername String?
+  optedIn          Boolean     @default(true)
+  verifiedAt       DateTime?
+  optedOutAt       DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([userId, channel])
+  @@index([channel, optedIn])
+}
+
+model TelegramLinkToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model OtpCode {
+  id         String     @id @default(uuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  purpose    OtpPurpose
+  channel    ChannelType @default(TELEGRAM)
+  expiresAt  DateTime
+  attempts   Int        @default(0)
+  maxAttempts Int       @default(5)
+  usedAt     DateTime?
+  sendCount  Int        @default(0)
+  lastSentAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  @@index([userId, purpose, createdAt])
 }
 
 model Course {
@@ -173,41 +268,64 @@ model Activity {
   user         User             @relation(fields: [userId], references: [id])
   judul        String
   kategori     ActivityKategori
+  lokasi       String?
   waktuMulai   DateTime
   waktuSelesai DateTime
   isRecurring  Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  reminders Reminder[]
+
+  @@index([userId, waktuMulai])
 }
 
 model Reminder {
-  id          String        @id @default(uuid())
-  taskId      String
-  task        Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  offsetHours Int
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      String?
+  task        Task?          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  eventId     String?
+  event       Activity?      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  offsetMinutes Int
   scheduledAt DateTime
-  isSent      Boolean       @default(false)
+  status      ReminderStatus @default(SCHEDULED)
+  isSent      Boolean        @default(false)
   sentAt      DateTime?
-  notification Notification?
+  snoozeCount Int            @default(0)
+  cancelledAt DateTime?
+  notifications Notification[]
 
   @@index([taskId])
+  @@index([eventId])
+  @@index([status, scheduledAt])
   @@index([isSent])
   @@index([scheduledAt])
 }
 
 model Notification {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  tipe        String
-  pesan       String
-  scheduledAt DateTime
-  isSent      Boolean   @default(false)
-  isRead      Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  reminderId  String?   @unique
-  reminder    Reminder? @relation(fields: [reminderId], references: [id], onDelete: SetNull)
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  tipe          String
+  channel       ChannelType @default(IN_APP)
+  status        String    @default("QUEUED")
+  pesan         String
+  scheduledAt   DateTime
+  isSent        Boolean   @default(false)
+  isRead        Boolean   @default(false)
+  sentAt        DateTime?
+  error         String?
+  providerMessageId String?
+  createdAt     DateTime  @default(now())
+  reminderId    String?
+  reminder      Reminder? @relation(fields: [reminderId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([isRead])
+  @@index([reminderId])
+  @@index([channel, status])
 }
 
 model NotificationPreference {
@@ -216,6 +334,7 @@ model NotificationPreference {
   user                User     @relation(fields: [userId], references: [id])
   autoRemindersEnabled Boolean  @default(true)
   pushEnabled         Boolean  @default(true)
+  telegramEnabled     Boolean  @default(true)
   createdAt           DateTime @default(now())
 }
 

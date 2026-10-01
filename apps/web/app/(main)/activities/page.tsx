@@ -10,9 +10,13 @@ import { Card, EmptyState, ErrorBox, Loading } from '@/components/ui';
 
 const KATEGORI_LABEL: Record<string, string> = {
   ORGANISASI: 'Organisasi',
-  EVENT: 'Event',
-  PERSONAL: 'Personal',
+  OLAHRAGA: 'Olahraga',
+  KERJA_KELOMPOK: 'Kerja Kelompok',
+  PRIBADI: 'Pribadi',
 };
+
+const OFFSET_PILIHAN = [15, 30, 60, 120];
+const DEFAULT_OFFSETS = [60, 15];
 
 const HARI_ID = ['AHAD', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 const BULAN_ID = [
@@ -39,11 +43,21 @@ export default function ActivitiesPage() {
 
   const [judul, setJudul] = useState('');
   const [kategori, setKategori] = useState('');
+  const [lokasi, setLokasi] = useState('');
   const [waktuMulai, setWaktuMulai] = useState('');
   const [waktuSelesai, setWaktuSelesai] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [offsets, setOffsets] = useState<number[]>(DEFAULT_OFFSETS);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  function toggleOffset(value: number) {
+    setOffsets((prev) =>
+      prev.includes(value)
+        ? prev.filter((o) => o !== value)
+        : [...prev, value].sort((a, b) => b - a),
+    );
+  }
 
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -51,24 +65,35 @@ export default function ActivitiesPage() {
       setFormError('Lengkapi judul, kategori, waktu mulai, dan waktu selesai.');
       return;
     }
+    if (offsets.length === 0) {
+      setFormError('Pilih minimal satu waktu pengingat.');
+      return;
+    }
     setSaving(true);
     setFormError('');
     try {
-      await apiFetch('/activities', {
+      const dibuat = await apiFetch<Activity>('/activities', {
         method: 'POST',
         body: JSON.stringify({
           judul,
           kategori,
+          lokasi: lokasi || undefined,
           waktuMulai: new Date(waktuMulai).toISOString(),
           waktuSelesai: new Date(waktuSelesai).toISOString(),
           isRecurring,
         }),
       });
+      await apiFetch(`/reminders/events/${dibuat.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ offsetMinutes: offsets }),
+      });
       setJudul('');
       setKategori('');
+      setLokasi('');
       setWaktuMulai('');
       setWaktuSelesai('');
       setIsRecurring(false);
+      setOffsets(DEFAULT_OFFSETS);
       reload();
     } catch (err) {
       setFormError(
@@ -111,49 +136,74 @@ export default function ActivitiesPage() {
       </div>
 
       <Card title="Tambah Aktivitas">
-        <form
-          onSubmit={create}
-          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto_auto]"
-        >
-          <input
-            value={judul}
-            onChange={(e) => setJudul(e.target.value)}
-            placeholder="Judul aktivitas"
-            className={inputCls}
-          />
-          <select
-            value={kategori}
-            onChange={(e) => setKategori(e.target.value)}
-            className={inputCls}
-          >
-            <option value="">Pilih kategori…</option>
-            {AKTIVITAS_KATEGORI.map((k) => (
-              <option key={k} value={k}>
-                {KATEGORI_LABEL[k] ?? k}
-              </option>
-            ))}
-          </select>
-          <input
-            type="datetime-local"
-            value={waktuMulai}
-            onChange={(e) => setWaktuMulai(e.target.value)}
-            className={inputCls}
-          />
-          <input
-            type="datetime-local"
-            value={waktuSelesai}
-            onChange={(e) => setWaktuSelesai(e.target.value)}
-            className={inputCls}
-          />
-          <label className="flex items-center gap-2 text-sm text-gray-600">
+        <form onSubmit={create} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <input
-              type="checkbox"
-              checked={isRecurring}
-              onChange={(e) => setIsRecurring(e.target.checked)}
-              className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              value={judul}
+              onChange={(e) => setJudul(e.target.value)}
+              placeholder="Judul aktivitas"
+              className={inputCls}
             />
-            Berulang
-          </label>
+            <select
+              value={kategori}
+              onChange={(e) => setKategori(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">Pilih kategori…</option>
+              {AKTIVITAS_KATEGORI.map((k) => (
+                <option key={k} value={k}>
+                  {KATEGORI_LABEL[k] ?? k}
+                </option>
+              ))}
+            </select>
+            <input
+              value={lokasi}
+              onChange={(e) => setLokasi(e.target.value)}
+              placeholder="Lokasi (opsional)"
+              className={inputCls}
+            />
+            <input
+              type="datetime-local"
+              value={waktuMulai}
+              onChange={(e) => setWaktuMulai(e.target.value)}
+              className={inputCls}
+            />
+            <input
+              type="datetime-local"
+              value={waktuSelesai}
+              onChange={(e) => setWaktuSelesai(e.target.value)}
+              className={inputCls}
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-600">
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              Berulang
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-gray-600">Ingatkan:</span>
+            {OFFSET_PILIHAN.map((m) => (
+              <label
+                key={m}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1 text-xs text-gray-700"
+              >
+                <input
+                  type="checkbox"
+                  checked={offsets.includes(m)}
+                  onChange={() => toggleOffset(m)}
+                  className="size-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                {m >= 60 ? `${m / 60} jam` : `${m} menit`} sebelumnya
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400">
+            Durasi 30 menit sampai 3 jam, kelipatan 5 menit.
+          </p>
           <button
             type="submit"
             disabled={saving}
@@ -196,7 +246,12 @@ export default function ActivitiesPage() {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
+                      {' · '}
+                      {a.durasiMenit} menit
                     </div>
+                    {a.lokasi && (
+                      <div className="text-xs text-gray-400">{a.lokasi}</div>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {a.kategori && (

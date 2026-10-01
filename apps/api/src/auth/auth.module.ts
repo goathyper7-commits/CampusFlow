@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
+import { OtpModule } from '../otp/otp.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RolesGuard } from './roles.guard';
         signOptions: { expiresIn: '15m' },
       }),
     }),
+    OtpModule,
   ],
   controllers: [AuthController],
   providers: [

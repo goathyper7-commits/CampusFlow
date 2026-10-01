@@ -7,15 +7,6 @@ import { clearAuth, getStoredUser, getAccessToken } from '@/lib/auth';
 import { OfflineBanner } from './OfflineBanner';
 import type { ReactNode } from 'react';
 
-const NAV = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/courses', label: 'Mata Kuliah' },
-  { href: '/schedules', label: 'Jadwal' },
-  { href: '/tasks', label: 'Tugas' },
-  { href: '/reminders', label: 'Pengingat' },
-  { href: '/notifications', label: 'Notifikasi' },
-];
-
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -55,11 +46,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     { href: '/courses', label: 'Mata Kuliah' },
     { href: '/schedules', label: 'Jadwal' },
     { href: '/tasks', label: 'Tugas' },
+    { href: '/activities', label: 'Aktivitas' },
     { href: '/reminders', label: 'Pengingat' },
     { href: '/notifications', label: 'Notifikasi' },
-    ...(user?.role === 'ADMIN'
-      ? [{ href: '/admin', label: 'Admin' }]
-      : []),
+    { href: '/settings', label: 'Pengaturan' },
+    ...(user?.role === 'ADMIN' ? [{ href: '/admin', label: 'Admin' }] : []),
   ];
 
   function handleLogout() {

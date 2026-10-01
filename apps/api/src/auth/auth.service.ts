@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserProfile } from '@campusflow/shared-types';
 import { PrismaService } from '../prisma/prisma.service';
+import { OtpService } from '../otp/otp.service';
 import { LoginDto, RegisterDto, UpdateProfileDto } from './dto';
 
 export interface TokenPayload {
@@ -21,6 +22,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private otp: OtpService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -90,6 +92,19 @@ export class AuthService {
         throw new ConflictException('Email sudah digunakan');
       }
     }
+    if (dto.username) {
+      const dup = await this.prisma.user.findUnique({ where: { username: dto.username } });
+      if (dup && dup.id !== userId) {
+        throw new ConflictException('Username sudah digunakan');
+      }
+    }
+    if (dto.phoneE164) {
+      const dup = await this.prisma.user.findUnique({ where: { phoneE164: dto.phoneE164 } });
+      if (dup && dup.id !== userId) {
+        throw new ConflictException('Nomor HP sudah digunakan');
+      }
+    }
+
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -98,7 +113,45 @@ export class AuthService {
         nama: dto.nama,
         nim: dto.nim,
         email: dto.email,
+        username: dto.username,
+        phoneE164: dto.phoneE164,
+        usernameChangedAt: dto.username ? new Date() : undefined,
+        phoneVerifiedAt: dto.phoneE164 ? null : undefined,
       },
+    });
+
+    if (dto.username) {
+      await this.prisma.usernameHistory.create({
+        data: { userId, username: dto.username },
+      });
+    }
+    return this.toProfile(user);
+  }
+
+  async requestOtpPublik(
+    email: string,
+    purpose: 'REGISTER' | 'LOGIN_PERANGKAT_BARU' | 'LUPA_SANDI',
+  ): Promise<{ terkirim: boolean; alasan?: string }> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { terkirim: false, alasan: 'Akun tidak ditemukan atau kanal belum terhubung' };
+    }
+    if (purpose === 'REGISTER') {
+      return { terkirim: false, alasan: 'Akun sudah terdaftar' };
+    }
+    const hasil = await this.otp.request(user.id, purpose);
+    return { terkirim: hasil.terkirim, alasan: hasil.alasan };
+  }
+
+  async verifyProfileChange(
+    userId: string,
+    purpose: 'GANTI_USERNAME' | 'GANTI_NOMOR',
+    kode: string,
+  ): Promise<UserProfile> {
+    await this.otp.verify(userId, purpose, kode);
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: purpose === 'GANTI_NOMOR' ? { phoneVerifiedAt: new Date() } : {},
     });
     return this.toProfile(user);
   }
@@ -130,6 +183,9 @@ export class AuthService {
       email: string;
       prodi: string | null;
       semester: number | null;
+      username: string | null;
+      phoneE164: string | null;
+      phoneVerifiedAt: Date | null;
       role: string;
       createdAt: Date;
     },
@@ -141,6 +197,9 @@ export class AuthService {
       email: user.email,
       prodi: user.prodi,
       semester: user.semester,
+      username: user.username,
+      phoneE164: user.phoneE164,
+      phoneVerifiedAt: user.phoneVerifiedAt?.toISOString() ?? null,
       role: user.role as UserProfile['role'],
       createdAt: user.createdAt.toISOString(),
     };

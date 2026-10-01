@@ -11,29 +11,45 @@ import { PushService } from './push.service';
 
 function toDto(
   notification: Prisma.NotificationGetPayload<{
-    include: { reminder: { include: { task: true } } };
+    include: { reminder: { include: { task: true, event: true } } };
   }>,
 ) {
   return {
     id: notification.id,
     tipe: notification.tipe,
+    channel: notification.channel,
+    status: notification.status,
     pesan: notification.pesan,
     scheduledAt: notification.scheduledAt.toISOString(),
     createdAt: notification.createdAt.toISOString(),
     isSent: notification.isSent,
     isRead: notification.isRead,
+    sentAt: notification.sentAt?.toISOString() ?? null,
+    error: notification.error,
     reminderId: notification.reminderId,
     reminder: notification.reminder
       ? {
           id: notification.reminder.id,
-          offsetHours: notification.reminder.offsetHours,
+          taskId: notification.reminder.taskId,
+          eventId: notification.reminder.eventId,
+          offsetMinutes: notification.reminder.offsetMinutes,
           scheduledAt: notification.reminder.scheduledAt.toISOString(),
-          task: {
-            id: notification.reminder.task.id,
-            judul: notification.reminder.task.judul,
-            deadline: notification.reminder.task.deadline.toISOString(),
-            status: notification.reminder.task.status,
-          },
+          task: notification.reminder.task
+            ? {
+                id: notification.reminder.task.id,
+                judul: notification.reminder.task.judul,
+                deadline: notification.reminder.task.deadline.toISOString(),
+                status: notification.reminder.task.status,
+              }
+            : null,
+          event: notification.reminder.event
+            ? {
+                id: notification.reminder.event.id,
+                judul: notification.reminder.event.judul,
+                waktuMulai: notification.reminder.event.waktuMulai.toISOString(),
+                lokasi: notification.reminder.event.lokasi,
+              }
+            : null,
         }
       : null,
   };

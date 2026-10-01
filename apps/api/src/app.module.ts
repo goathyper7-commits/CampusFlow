@@ -9,6 +9,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { ChannelsModule } from './channels/channels.module';
 import { GroupsModule } from './groups/groups.module';
 import { CommentsModule } from './comments/comments.module';
 import { AttachmentsModule } from './attachments/attachments.module';
@@ -36,6 +37,7 @@ import { buildRedisConnection } from './reminders/reminders.constants';
     RemindersModule,
     NotificationsModule,
     ActivitiesModule,
+    ChannelsModule,
     GroupsModule,
     CommentsModule,
     AttachmentsModule,
