@@ -1,9 +1,22 @@
 import nextPWA from 'next-pwa';
 
+const EXPRESS_PROXY_URL =
+  process.env.VERCEL === '1'
+    ? 'https://often-blah-contemporary-naples.trycloudflare.com'
+    : undefined;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@campusflow/shared-types'],
   reactStrictMode: true,
+  async rewrites() {
+    if (!EXPRESS_PROXY_URL) return [];
+    return {
+      beforeFiles: [
+        { source: '/:path*', destination: `${EXPRESS_PROXY_URL}/:path*` },
+      ],
+    };
+  },
 };
 
 const withPWA = nextPWA({

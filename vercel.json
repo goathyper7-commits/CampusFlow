@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://often-blah-contemporary-naples.trycloudflare.com/$1"
+    }
+  ]
+}
