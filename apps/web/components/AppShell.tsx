@@ -1,9 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { clearAuth, getStoredUser, getAccessToken } from '@/lib/auth';
+import { API_URL } from '@/lib/config';
 import { OfflineBanner } from './OfflineBanner';
 import type { ReactNode } from 'react';
 
@@ -29,7 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     async function fetchUnread() {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/notifications?unreadOnly=true`,
+          `${API_URL}/notifications?unreadOnly=true`,
           {
             headers: { Authorization: `Bearer ${getAccessToken()}` },
             cache: 'no-store',
@@ -71,9 +73,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-gray-50">
       <aside className="fixed inset-y-0 left-0 z-20 flex w-60 flex-col border-r border-gray-200 bg-white">
         <div className="flex items-center gap-2 px-5 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 font-bold text-white">
-            CF
-          </div>
+          <Image
+            src="/icons/icon-192.png"
+            alt="Logo CampusFlow"
+            width={36}
+            height={36}
+            className="rounded-lg"
+          />
           <div>
             <div className="text-sm font-bold text-gray-900">CampusFlow</div>
             <div className="text-xs text-gray-500">Schedule & Task Manager</div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { API_URL } from './config';
+
 const ACCESS_KEY = 'cf_access_token';
 const USER_KEY = 'cf_user';
 
@@ -46,13 +48,10 @@ export function clearAuth() {
 
 export async function tryRefreshToken(): Promise<boolean> {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/refresh-token`,
-      {
-        method: 'POST',
-        credentials: 'include',
-      },
-    );
+    const res = await fetch(`${API_URL}/auth/refresh-token`, {
+      method: 'POST',
+      credentials: 'include',
+    });
     if (!res.ok) return false;
     const data = await res.json();
     saveAuth({ accessToken: data.accessToken, user: data.user });

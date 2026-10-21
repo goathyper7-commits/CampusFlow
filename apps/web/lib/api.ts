@@ -1,6 +1,7 @@
 'use client';
 
 import { clearAuth, getAccessToken, tryRefreshToken } from './auth';
+import { API_URL } from './config';
 import {
   dbDrain,
   dbEnqueue,
@@ -9,8 +10,7 @@ import {
   requestOutboxSync,
 } from './offline';
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+export { API_URL };
 
 export class ApiError extends Error {
   status: number;
@@ -69,11 +69,17 @@ export async function apiFetch<T>(
           0,
         );
       }
-      throw err;
+      throw new ApiError(
+        'Tidak dapat terhubung ke server API CampusFlow. Pastikan backend sudah berjalan dan API_URL sudah benar.',
+        0,
+      );
     }
     const cached = await dbGet<T>(cacheKey(path));
     if (cached !== null) return cached;
-    throw err;
+    throw new ApiError(
+      'Tidak dapat terhubung ke server API CampusFlow. Pastikan backend sudah berjalan dan API_URL sudah benar.',
+      0,
+    );
   }
 
   if (res.status === 401 && accessToken && !path.startsWith('/auth/')) {
