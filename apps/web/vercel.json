@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "https://often-blah-contemporary-naples.trycloudflare.com/$1"
+      "destination": "https://pickup-gis-started-commitment.trycloudflare.com/$1"
     }
   ]
 }
