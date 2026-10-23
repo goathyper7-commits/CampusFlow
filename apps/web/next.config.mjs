@@ -1,9 +1,6 @@
 import nextPWA from 'next-pwa';
 
-const EXPRESS_PROXY_URL =
-  process.env.VERCEL === '1'
-    ? 'https://followed-into-asp-incoming.trycloudflare.com'
-    : undefined;
+const EXPRESS_PROXY_URL = process.env.EXPRESS_PROXY_URL?.trim().replace(/\/$/, '');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
