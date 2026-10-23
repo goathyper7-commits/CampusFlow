@@ -2,7 +2,7 @@ import nextPWA from 'next-pwa';
 
 const EXPRESS_PROXY_URL =
   process.env.VERCEL === '1'
-    ? 'https://till-gbp-pmid-gdp.trycloudflare.com'
+    ? 'https://followed-into-asp-incoming.trycloudflare.com'
     : undefined;
 
 /** @type {import('next').NextConfig} */
