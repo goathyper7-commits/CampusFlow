@@ -1,7 +1,11 @@
-import nextPWA from 'next-pwa';
+const TUNNEL_URL = 'https://TEMPEL-URL-TUNNEL-DI-SINI.trycloudflare.com';
 
-const EXPRESS_PROXY_URL = process.env.EXPRESS_PROXY_URL?.trim().replace(/\/$/, '');
-
+const EXPRESS_PROXY_URL = (
+  process.env.EXPRESS_PROXY_URL ||
+  (process.env.VERCEL === '1' ? TUNNEL_URL : '')
+)
+  .trim()
+  .replace(/\/$/, '');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@campusflow/shared-types'],
