@@ -2,7 +2,7 @@ import nextPWA from 'next-pwa';
 
 const EXPRESS_PROXY_URL =
   process.env.VERCEL === '1'
-    ? 'https://often-blah-contemporary-naples.trycloudflare.com'
+    ? 'https://adding-golf-occasional-div.trycloudflare.com '
     : undefined;
 
 /** @type {import('next').NextConfig} */
