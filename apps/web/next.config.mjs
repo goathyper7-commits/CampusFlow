@@ -14,7 +14,7 @@ const nextConfig = {
 
   // Menambahkan URL Cloudflare Tunnel sebagai environment variable
   env: {
-    NEXT_PUBLIC_API_URL: 'Cari bagian Root Directory.',
+    NEXT_PUBLIC_API_URL: 'https://capable-mind-flex-filing.trycloudflare.com',
   },
 
   // Memperingankan izin akses gambar jika URL Cloudflare digunakan untuk media/assets
