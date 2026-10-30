@@ -14,7 +14,7 @@ const nextConfig = {
 
   // Menambahkan URL Cloudflare Tunnel sebagai environment variable
   env: {
-    NEXT_PUBLIC_API_URL: 'https://exec-texas-classics-backed.trycloudflare.com',
+    NEXT_PUBLIC_API_URL: 'https://consolidation-unfortunately-benefit-magazine.trycloudflare.com',
   },
 
   // Memperingankan izin akses gambar jika URL Cloudflare digunakan untuk media/assets
@@ -22,7 +22,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'exec-texas-classics-backed.trycloudflare.com',
+        hostname: 'consolidation-unfortunately-benefit-magazine.trycloudflare.com',
       },
     ],
   },
