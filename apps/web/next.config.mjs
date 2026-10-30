@@ -22,7 +22,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'wan-take-anytime-dave.trycloudflare.com',
+        hostname: 'capable-mind-flex-filing.trycloudflare.com',
       },
     ],
   },
